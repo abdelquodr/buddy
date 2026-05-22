@@ -16,11 +16,11 @@ const lexend = Lexend({
 
 const navItems = [
   { label: "My Portfolio", icon: LuUserRound, href: "/dashboard" },
-  { label: "My Group", icon: LuUsersRound, href: "/dashboard/group" },
+  { label: "My Group", icon: LuUsersRound },
   { label: "Messages", icon: Mail, href: "/dashboard/messages" },
-  { label: "Analytics", icon: TrendingUp, href: "/dashboard/analytics" },
-  { label: "Pack", icon: CiDollar, href: "/dashboard/pack" },
-  { label: "Settings", icon: IoSettingsOutline, href: "/dashboard/settings" },
+  { label: "Analytics", icon: TrendingUp },
+  { label: "Pack", icon: CiDollar },
+  { label: "Settings", icon: IoSettingsOutline },
 ];
 
 export function DashboardSidebar() {
@@ -53,33 +53,47 @@ export function DashboardSidebar() {
         >
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive =
-              item.href === "/dashboard"
+            const isActive = item.href
+              ? item.href === "/dashboard"
                 ? pathname === "/dashboard"
-                : pathname.startsWith(item.href);
+                : pathname.startsWith(item.href)
+              : false;
 
-            return (
+            const sharedClassName =
+              "group relative flex w-full items-center gap-3 rounded-[18px] px-8 py-1.5 text-sm font-medium transition";
+            const itemClassName = `flex w-full items-center gap-3 rounded-lg px-12 py-3.5 ${
+              isActive
+                ? "bg-white text-brand-orange shadow-[0_12px_28px_rgba(17,24,39,0.06)]"
+                : "text-[#8a96a3] hover:bg-[#f7f8fc] hover:text-[#4b505a]"
+            }`;
+
+            const content = (
+              <>
+                {isActive ? (
+                  <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-brand-orange" />
+                ) : null}
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                <span>{item.label}</span>
+              </>
+            );
+
+            return item.href ? (
               <Link
                 key={item.label}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
-                className="group relative flex w-full items-center gap-3 rounded-[18px] px-8 py-1.5 text-sm font-medium transition"
+                className={sharedClassName}
               >
-                <nav
-                  className={`flex w-full items-center gap-3 px-12 py-3.5 rounded-lg ${
-                    isActive
-                      ? "bg-white text-brand-orange shadow-[0_12px_28px_rgba(17,24,39,0.06)]"
-                      : "text-[#8a96a3] hover:bg-[#f7f8fc] hover:text-[#4b505a]"
-                  }
-                    `}
-                >
-                  {isActive ? (
-                    <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-brand-orange" />
-                  ) : null}
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  <span className="">{item.label}</span>
-                </nav>
+                <nav className={itemClassName}>{content}</nav>
               </Link>
+            ) : (
+              <button
+                key={item.label}
+                type="button"
+                className={sharedClassName}
+              >
+                <nav className={itemClassName}>{content}</nav>
+              </button>
             );
           })}
         </nav>
