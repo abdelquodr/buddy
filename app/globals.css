@@ -1,26 +1,53 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-brand-orange: #FF8600;
+  --color-brand-grey: #5B6871;
+  --color-brand-light-grey: #ECEDED;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    background-color: #ffffff;
+    color: #5b6871;
+    font-family: inherit;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: #f7f8fc;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .dash-surface {
+    border-radius: 20px;
+    background: #ffffff;
+    padding: 20px;
+    box-shadow: 0 14px 30px rgba(17, 24, 39, 0.05);
+  }
+
+  .signup-auth-card {
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .signup-auth-card-panel {
+    border: 1px solid #dde3ea;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 40px 38px 44px;
+    box-shadow: 0 24px 48px rgba(17, 24, 39, 0.08);
+  }
 }
