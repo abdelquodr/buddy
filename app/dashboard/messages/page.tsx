@@ -32,7 +32,7 @@ type ChatMessage = {
 
 type ChatState = {
   selectedContact: string;
-  unreadByContact: Record<string, boolean>;
+  unreadByContact: Record<string, number>;
   threads: Record<string, ChatMessage[]>;
 };
 
@@ -210,12 +210,12 @@ function createInitialState(): ChatState {
   return {
     selectedContact: "Lisa Roy",
     unreadByContact: {
-      "Lisa Roy": false,
-      "Jamie Taylor": true,
-      "Jason Roy": false,
-      "Amy Frost": false,
-      "Paul Wilson": false,
-      "Ana Williams": true,
+      "Lisa Roy": 0,
+      "Jamie Taylor": 1,
+      "Jason Roy": 0,
+      "Amy Frost": 0,
+      "Paul Wilson": 0,
+      "Ana Williams": 1,
     },
     threads: initialThreads,
   };
@@ -258,11 +258,16 @@ export default function MessagesPage() {
               return current;
             }
 
+            const parsedUnread: Record<string, number> = {};
+            for (const [k, v] of Object.entries(parsed.unreadByContact ?? {})) {
+              parsedUnread[k] = typeof v === "number" ? v : v ? 1 : 0;
+            }
+
             return {
               selectedContact: parsed.selectedContact,
               unreadByContact: {
                 ...current.unreadByContact,
-                ...(parsed.unreadByContact ?? {}),
+                ...parsedUnread,
               },
               threads: {
                 ...current.threads,
@@ -295,9 +300,11 @@ export default function MessagesPage() {
       return {
         ...contact,
         active: contact.name === state.selectedContact,
-        unread: state.unreadByContact[contact.name] ?? contact.unread ?? false,
+        unreadCount:
+          state.unreadByContact[contact.name] ?? (contact.unread ? 1 : 0),
         preview: toPreview(lastMessage),
         time: lastMessage?.time ?? "10:35 AM",
+        lastMessageSide: lastMessage?.side,
       };
     });
   }, [state.selectedContact, state.threads, state.unreadByContact]);
@@ -337,7 +344,7 @@ export default function MessagesPage() {
       selectedContact: name,
       unreadByContact: {
         ...current.unreadByContact,
-        [name]: false,
+        [name]: 0,
       },
     }));
     setDraft("");
@@ -365,7 +372,7 @@ export default function MessagesPage() {
         ...current,
         unreadByContact: {
           ...current.unreadByContact,
-          [current.selectedContact]: false,
+          [current.selectedContact]: 0,
         },
         threads: {
           ...current.threads,
@@ -377,12 +384,42 @@ export default function MessagesPage() {
     setDraft("");
   };
 
+  const handleFileSend = async (file: File, dataUrl: string) => {
+    setState((current) => {
+      const thread = current.threads[current.selectedContact] ?? [];
+      const nextMessage: ChatMessage = {
+        id: `${current.selectedContact.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
+        side: "right",
+        time: formatTime(),
+        avatarLabel: currentUser.avatarLabel,
+        avatarSrc: currentUser.avatarSrc,
+        kind: "file",
+        fileLabel: file.name,
+        fileSrc: dataUrl,
+      };
+
+      return {
+        ...current,
+        unreadByContact: {
+          ...current.unreadByContact,
+          [current.selectedContact]: 0,
+        },
+        threads: {
+          ...current.threads,
+          [current.selectedContact]: [...thread, nextMessage],
+        },
+      };
+    });
+  };
+
+  const handleImageSend = handleFileSend;
+
   return (
     <>
       <DashboardTopbar title="Messages" />
 
-      <section className="grid min-h-[calc(100vh-10rem)] bg-white p-6 gap-6 rounde-md  xl:grid-cols-[320px_minmax(0,1fr)]">
-        <DashboardCard className="flex min-h-0 flex-col bg-[#f7f8fc] shadow-[0_12px_28px_rgba(17,24,39,0.06)] overflow-hidden p-0">
+      <section className="grid h-[calc(100vh-10rem)] overflow-hidden gap-6 bg-white p-6 rounde-md xl:grid-cols-[320px_minmax(0,1fr)]">
+        <DashboardCard className="flex h-full min-h-0 flex-col overflow-hidden bg-[#f7f8fc] p-0 shadow-[0_12px_28px_rgba(17,24,39,0.06)]">
           <div className="border-b border-[#edf0f4] p-5 pb-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -438,7 +475,8 @@ export default function MessagesPage() {
                   preview={contact.preview}
                   time={contact.time}
                   active={contact.active}
-                  unread={contact.unread}
+                  unreadCount={contact.unreadCount}
+                  lastMessageSide={contact.lastMessageSide}
                   status={contact.status}
                   avatarSrc={contact.avatarSrc}
                   onClick={() => selectContact(contact.name)}
@@ -452,17 +490,17 @@ export default function MessagesPage() {
           </div>
         </DashboardCard>
 
-        <DashboardCard className="flex h-full min-h-0 bg-[#f7f8fc] shadow-[0_12px_28px_rgba(17,24,39,0.06)] flex-col overflow-hidden p-0">
+        <DashboardCard className="flex h-full min-h-0 flex-col overflow-hidden bg-[#f7f8fc] p-0 shadow-[0_12px_28px_rgba(17,24,39,0.06)]">
           <div className="flex items-center justify-between border-b border-[#edf0f4] p-5">
             <div className="flex items-center gap-3">
-              <div className="relative h-11 w-11 overflow-hidden rounded-full bg-[#f1f5f9]">
+              <div className="relative h-11 w-11 rounded-full bg-[#f1f5f9]">
                 <Image
                   src={activeContact.avatarSrc}
                   alt={activeContact.name}
                   fill
                   className="object-cover"
                 />
-                <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-[#39d353]" />
+                <span className="absolute -bottom-1 left-1 h-3.5 w-3.5 rounded-full bg-[#39d353] z-20" />
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-[#2b2f38]">
@@ -505,55 +543,74 @@ export default function MessagesPage() {
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col space-y-6 overflow-y-auto p-5 lg:p-6">
-            {activeMessages.map((message) => {
-              if (message.kind === "file") {
-                return (
-                  <div key={message.id} className="flex items-start gap-2">
-                    <div className="relative h-8 w-8 overflow-hidden rounded-full bg-[#f1f5f9]">
-                      <Image
-                        src={message.avatarSrc}
-                        alt={message.avatarLabel}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="rounded-2xl border border-[#edf0f4] bg-[#f8f9fb] p-2 shadow-[0_8px_18px_rgba(17,24,39,0.03)]">
-                      <div className="relative h-16 w-28 overflow-hidden rounded-xl bg-[#e5e7eb]">
-                        <Image
-                          src={message.fileSrc ?? "/img/trending-1.png"}
-                          alt={message.fileLabel ?? "Shared file"}
-                          fill
-                          className="object-cover"
-                        />
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="flex-1 space-y-6 overflow-y-auto p-5 lg:p-6">
+              {activeMessages.map((message) => {
+                if (message.kind === "file") {
+                  const isRight = message.side === "right";
+
+                  return (
+                    <div
+                      key={message.id}
+                      className={
+                        isRight ? "flex justify-end" : "flex justify-start"
+                      }
+                    >
+                      <div
+                        className={[
+                          "flex items-end gap-2",
+                          isRight ? "flex-row-reverse" : "",
+                        ].join(" ")}
+                      >
+                        <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-[#f1f5f9]">
+                          <Image
+                            src={message.avatarSrc}
+                            alt={message.avatarLabel}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="rounded-2xl border border-[#edf0f4] bg-[#f8f9fb] p-2 shadow-[0_8px_18px_rgba(17,24,39,0.03)]">
+                          <div className="relative h-16 w-28 overflow-hidden rounded-xl bg-[#e5e7eb]">
+                            <Image
+                              src={message.fileSrc ?? "/img/trending-1.png"}
+                              alt={message.fileLabel ?? "Shared file"}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <p className="mt-1 text-xs text-[#4b5563]">
+                            {message.fileLabel}
+                          </p>
+                        </div>
                       </div>
-                      <p className="mt-1 text-xs text-[#4b5563]">
-                        {message.fileLabel}
-                      </p>
                     </div>
-                  </div>
+                  );
+                }
+
+                return (
+                  <ChatBubble
+                    key={message.id}
+                    side={message.side}
+                    avatarLabel={message.avatarLabel}
+                    avatarSrc={message.avatarSrc}
+                    time={message.time}
+                  >
+                    {message.text}
+                  </ChatBubble>
                 );
-              }
+              })}
+              <div ref={messageEndRef} />
+            </div>
 
-              return (
-                <ChatBubble
-                  key={message.id}
-                  side={message.side}
-                  avatarLabel={message.avatarLabel}
-                  avatarSrc={message.avatarSrc}
-                  time={message.time}
-                >
-                  {message.text}
-                </ChatBubble>
-              );
-            })}
-            <div ref={messageEndRef} />
-
-            <div className="mt-auto shrink-0 pt-2">
+            <div className="shrink-0 border-t border-[#edf0f4] bg-[#f7f8fc] p-5 pt-4 lg:p-6 lg:pt-4">
               <MessageComposer
                 value={draft}
                 onChange={setDraft}
                 onSubmit={sendMessage}
+                onFile={handleFileSend}
+                onImage={handleImageSend}
+                onEmoji={(emoji) => setDraft((d) => d + emoji)}
               />
             </div>
           </div>
