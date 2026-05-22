@@ -128,7 +128,6 @@ function OverviewChart() {
             </button>
           ))}
         </div>
-
       </div>
 
       <div className="rounded-[18px] bg-[#fcfcfc] px-4 pb-5 pt-4">
@@ -209,7 +208,6 @@ function OverviewChart() {
             );
           })}
         </svg>
-
       </div>
     </div>
   );
@@ -494,7 +492,7 @@ export default function DashboardPage() {
 
           <DashboardCard title="Trending News">
             <div className="space-y-3">
-              {newsItems.map((item, index) => (
+              {newsItems.map((item) => (
                 <article
                   key={item.title}
                   className="flex items-center gap-3 rounded-2xl border border-[#edf0f4] p-2.5"
@@ -515,12 +513,6 @@ export default function DashboardPage() {
                       {item.description}
                     </p>
                   </div>
-                  {index === 0 && (
-                    <span
-                      className="ml-auto h-2 w-2 rounded-full bg-brand-orange"
-                      aria-hidden="true"
-                    />
-                  )}
                 </article>
               ))}
             </div>
