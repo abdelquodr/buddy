@@ -8,7 +8,11 @@ import { AuthCard } from "@/app/components/auth/AuthCard";
 import { Input } from "@/app/components/Input";
 import { Button } from "@/app/components/Button";
 import { AuthHelpFab } from "@/app/components/auth/AuthHelpFab";
-import { authApi, getAuthTokenFromResponse } from "@/app/lib/auth-api";
+import {
+  AuthApiError,
+  authApi,
+  getAuthTokenFromResponse,
+} from "@/app/lib/auth-api";
 import { useAuth } from "@/app/lib/auth-context";
 import { registerSchema } from "@/app/utils/validation";
 
@@ -107,10 +111,25 @@ export default function EmailSignupPage() {
       // Navigate to check-mail page
       router.push("/signup/check-mail");
     } catch (error) {
-      console.error("Registration error:", error);
+      const submitMessage =
+        error instanceof AuthApiError
+          ? error.code === "TIMEOUT_ERROR"
+            ? "Registration is taking longer than expected. Please check your connection and try again."
+            : error.message
+          : error instanceof Error
+            ? error.message
+            : "An error occurred";
+
+      if (
+        process.env.NODE_ENV !== "production" &&
+        !(error instanceof AuthApiError)
+      ) {
+        console.error("Registration error:", error);
+      }
+
       setErrors((prev) => ({
         ...prev,
-        submit: error instanceof Error ? error.message : "An error occurred",
+        submit: submitMessage,
       }));
     } finally {
       setIsLoading(false);

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { IoCheckmarkSharp } from "react-icons/io5";
 
 interface MessageListItemProps {
   name: string;
@@ -36,9 +37,9 @@ export function MessageListItem({
     >
       <div className="relative h-10 w-10 shrink-0 rounded-full bg-[#f1f5f9]">
         <Image src={avatarSrc} alt={name} fill className="object-cover" />
-        {/* {status === "online" ? (
+        {status === "online" ? (
           <span className="absolute -bottom-1 left-1 h-3.5 w-3.5 rounded-full bg-[#39d353] z-20" />
-        ) : null} */}
+        ) : null}
       </div>
 
       <div className="min-w-0 flex-1">
@@ -57,7 +58,7 @@ export function MessageListItem({
         </span>
       ) : lastMessageSide === "right" ? (
         <span className="mt-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#DCE8FF] text-brand-orange">
-          ✓
+          <IoCheckmarkSharp />
         </span>
       ) : null}
     </button>

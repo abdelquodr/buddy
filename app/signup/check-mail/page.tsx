@@ -2,12 +2,14 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/app/components/Button";
 import Image from "next/image";
 import { authApi } from "@/app/lib/auth-api";
 import { useAuth } from "@/app/lib/auth-context";
 
 export default function CheckMailPage() {
+  const router = useRouter();
   const { token, email } = useAuth();
   const [error, setError] = useState("");
   const [isResending, setIsResending] = useState(false);
@@ -63,11 +65,13 @@ export default function CheckMailPage() {
             </p>
           </div>
 
-          <Link href="/signup/verify" className="block">
-            <Button variant="primary" size="lg">
-              Confirm Email
-            </Button>
-          </Link>
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => router.push("/signup/verify")}
+          >
+            Confirm Email
+          </Button>
 
           <p className="text-xs text-[#8a96a3]">
             Didn&apos;t get the mail?{" "}
@@ -81,9 +85,17 @@ export default function CheckMailPage() {
             </button>
           </p>
           {error && (
-            <p className="text-xs text-red-500" role="alert">
-              {error}
-            </p>
+            <div className="text-center" role="alert">
+              <p className="text-xs text-red-500">{error}</p>
+              {error.includes("No authentication token found") ? (
+                <Link
+                  href="/signup"
+                  className="mt-1 inline-block text-xs font-semibold text-brand-orange hover:underline"
+                >
+                  Register here
+                </Link>
+              ) : null}
+            </div>
           )}
         </div>
       </div>

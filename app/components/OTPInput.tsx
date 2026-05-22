@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useRef, useEffect, memo } from "react";
+import React, { useRef, memo } from "react";
+import Link from "next/link";
 
 interface OTPInputProps {
   value: string;
@@ -99,9 +100,17 @@ const OTPInputComponent: React.FC<OTPInputProps> = ({
         ))}
       </div>
       {error && (
-        <p className="text-error text-center mt-2" role="alert">
-          {error}
-        </p>
+        <div className="mt-2 text-center" role="alert">
+          <p className="text-xs text-error">{error}</p>
+          {error.includes("No authentication token found") ? (
+            <Link
+              href="/signup"
+              className="mt-1 inline-block text-xs font-semibold text-brand-orange hover:underline"
+            >
+              Register here
+            </Link>
+          ) : null}
+        </div>
       )}
     </div>
   );

@@ -7,7 +7,11 @@ import { AuthCard } from "@/app/components/auth/AuthCard";
 import { Button } from "@/app/components/Button";
 import { Input } from "@/app/components/Input";
 import { AuthHelpFab } from "@/app/components/auth/AuthHelpFab";
-import { authApi, getAuthTokenFromResponse } from "@/app/lib/auth-api";
+import {
+  AuthApiError,
+  authApi,
+  getAuthTokenFromResponse,
+} from "@/app/lib/auth-api";
 import { useAuth } from "@/app/lib/auth-context";
 import { loginSchema } from "@/app/utils/validation";
 
@@ -95,12 +99,18 @@ export default function LoginPage() {
 
       router.push("/dashboard");
     } catch (error) {
+      const submitMessage =
+        error instanceof AuthApiError
+          ? error.code === "TIMEOUT_ERROR"
+            ? "Login is taking longer than expected. Please check your connection and try again."
+            : error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to log in right now.";
+
       setErrors((previous) => ({
         ...previous,
-        submit:
-          error instanceof Error
-            ? error.message
-            : "Unable to log in right now.",
+        submit: submitMessage,
       }));
     } finally {
       setIsLoading(false);
@@ -141,6 +151,12 @@ export default function LoginPage() {
             error={errors.password}
             disabled={isLoading}
           />
+
+          {errors.submit && (
+            <p className="text-xs text-red-500" role="alert">
+              {errors.submit}
+            </p>
+          )}
 
           <Button
             variant="primary"
